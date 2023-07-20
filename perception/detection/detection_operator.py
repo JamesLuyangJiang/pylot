@@ -14,6 +14,23 @@ from pylot.perception.messages import ObstaclesMessage
 
 import tensorflow as tf
 
+import json
+import os
+
+logger = logging.getLogger(__name__)
+
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, BoundingBox2D):
+            bbox = {
+                'xmin': "{}".format(obj.x_min),
+                'xmax': "{}".format(obj.x_max),
+                'ymin': "{}".format(obj.y_min),
+                'ymax': "{}".format(obj.y_max)
+            }
+            return bbox
+            
+        return obj.__dict__
 
 class DetectionOperator(erdos.Operator):
     """Detects obstacles using a TensorFlow model.
@@ -53,6 +70,8 @@ class DetectionOperator(erdos.Operator):
 
         # Load the model from the saved_model format file.
         self._model = tf.saved_model.load(model_path)
+
+        logger.debug('\n\n*********Path of the model using now: %s', model_path)
 
         self._coco_labels = load_coco_labels(self._flags.path_coco_labels)
         self._bbox_colors = load_coco_bbox_colors(self._coco_labels)
@@ -139,6 +158,32 @@ class DetectionOperator(erdos.Operator):
 
         self._logger.debug('@{}: {} obstacles: {}'.format(
             msg.timestamp, self.config.name, obstacles))
+
+        # Extract only necessary fields
+        json_obstacles = []
+        for obj in obstacles:
+            json_obstacles.append(
+                {'id': obj.id,
+                 'label': obj.label,
+                 'bbox': obj.bounding_box,
+                 'confidence': "{}".format(obj.confidence)
+                }
+            )
+
+        # Prepare the complete json object
+        obstacle_json = json.dumps([obj for obj in json_obstacles], cls=CustomEncoder)
+        obstacle_json = obstacle_json.replace("\"", "")
+        obstacle = {
+            "timestamp": "{}".format(msg.timestamp),
+            "obstacles": obstacle_json
+        }
+        
+        # Append the json object to the json file
+        filename = "{}/obstacles.json".format(self._flags.data_path)
+        with open(filename, "a") as file:
+            json.dump(obstacle, file)
+            file.write(os.linesep)
+            file.close()
 
         # Get runtime in ms.
         runtime = (time.time() - start_time) * 1000
