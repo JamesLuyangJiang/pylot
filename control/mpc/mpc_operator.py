@@ -10,6 +10,8 @@ from pylot.control.mpc.mpc import ModelPredictiveController
 from pylot.control.mpc.utils import CubicSpline2D, global_config, zero_to_2_pi
 from pylot.control.pid import PIDLongitudinalController
 
+import json
+import os
 
 class MPCOperator(erdos.Operator):
     def __init__(self, pose_stream, waypoints_stream, control_stream, flags):
@@ -80,6 +82,22 @@ class MPCOperator(erdos.Operator):
         self._logger.debug("Steer: {}".format(control_msg.steer))
         self._logger.debug("Brake: {}".format(control_msg.brake))
         control_stream.send(control_msg)
+
+        # Prepare the json object
+        control = {
+            "timestamp": "{}".format(timestamp),
+            "speed": vehicle_speed,
+            "steer": control_msg.steer,
+            "throttle": control_msg.throttle,
+            "brake": control_msg.brake
+        }
+
+        # Append the json object to the json file
+        filename = "{}/control.json".format(self._flags.data_path)
+        with open(filename, "a") as file:
+            json.dump(control, file)
+            file.write(os.linesep)
+            file.close()
 
     def setup_mpc(self, waypoints, target_speeds):
         path = waypoints.as_numpy_array_2D()
