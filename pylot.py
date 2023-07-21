@@ -12,6 +12,9 @@ from pylot.drivers.sensor_setup import DepthCameraSetup, RGBCameraSetup, \
     SegmentedCameraSetup
 from pylot.simulation.utils import get_world, set_asynchronous_mode
 
+import datetime
+import os
+
 FLAGS = flags.FLAGS
 
 flags.DEFINE_list('goal_location', '234, 59, 39', 'Ego-vehicle goal location')
@@ -255,6 +258,12 @@ def main(args):
     # synchronous mode off after the script finishes running.
     client, world = get_world(FLAGS.simulator_host, FLAGS.simulator_port,
                               FLAGS.simulator_timeout)
+    
+    current_time = datetime.datetime.now()
+    time_string = current_time.strftime("%Y-%m-%d_%H:%M:%S")
+    os.makedirs("data/{}".format(time_string), exist_ok=True)
+    FLAGS.data_path = os.path.join(FLAGS.data_path, time_string)
+
     try:
         if FLAGS.simulation_recording_file is not None:
             client.start_recorder(FLAGS.simulation_recording_file)
