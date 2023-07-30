@@ -323,6 +323,8 @@ class CarlaOperator(erdos.Operator):
         else:
             self._world = self._client.load_world('Town{:02d}'.format(
                 self._flags.simulator_town))
+            print('############## CURRENT MAP: {}'.format(
+                self._flags.simulator_town))
         self._logger.info('Setting the weather to {}'.format(
             self._flags.simulator_weather))
         pylot.simulation.utils.set_weather(self._world,
