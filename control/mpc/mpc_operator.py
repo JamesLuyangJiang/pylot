@@ -86,7 +86,7 @@ class MPCOperator(erdos.Operator):
         # Prepare the json object
         control = {
             "timestamp": "{}".format(timestamp),
-            "speed": vehicle_speed,
+            "speed": (vehicle_speed * 3.6),
             "steer": control_msg.steer,
             "throttle": control_msg.throttle,
             "brake": control_msg.brake
