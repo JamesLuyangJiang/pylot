@@ -199,7 +199,8 @@ class PlanningOperator(erdos.Operator):
         (speed_factor, _, _, speed_factor_tl,
          speed_factor_stop) = self._world.stop_for_agents(timestamp)
         if self._flags.planning_type == 'waypoint':
-            target_speed = speed_factor * self._flags.target_speed
+            update_target_speed = self.get_speed_limit(self._world.static_obstacles)
+            target_speed = speed_factor * update_target_speed
             self._logger.debug(
                 '@{}: speed factor: {}, target speed: {}'.format(
                     timestamp, speed_factor, target_speed))
@@ -211,6 +212,18 @@ class PlanningOperator(erdos.Operator):
                 timestamp, speed_factor))
             output_wps.apply_speed_factor(speed_factor)
         waypoints_stream.send(WaypointsMessage(timestamp, output_wps))
+
+    def get_speed_limit(self, obstacles):
+        for obstacle in obstacles:
+            if obstacle.is_speed_limit() and obstacle.confidence > 0.5:
+                if obstacle.label == 'speed limit 30':
+                    self._flags.target_speed = 8.1
+                elif obstacle.label == 'speed limit 60':
+                    self._flags.target_speed = 16.5
+                elif obstacle.label == 'speed limit 90':
+                    self._flags.target_speed = 24.8
+        
+        return self._flags.target_speed
 
     def get_predictions(self, prediction_msg, ego_transform):
         """Extracts obstacle predictions out of the message.
