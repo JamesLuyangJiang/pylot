@@ -221,7 +221,7 @@ class PlanningOperator(erdos.Operator):
                 elif obstacle.label == 'speed limit 60':
                     self._flags.target_speed = 16.5
                 elif obstacle.label == 'speed limit 90':
-                    self._flags.target_speed = 24.8
+                    self._flags.target_speed = 20.0
         
         return self._flags.target_speed
 
