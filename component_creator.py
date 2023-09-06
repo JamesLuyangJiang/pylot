@@ -80,6 +80,10 @@ def add_obstacle_detection(center_camera_stream,
             obstacles_streams = pylot.operator_creator.add_obstacle_detection(
                 center_camera_stream, time_to_decision_stream)
             obstacles_stream_wo_depth = obstacles_streams[0]
+            test_perfect = pylot.operator_creator.add_perfect_detector(
+            depth_camera_stream, center_camera_stream, segmented_camera_stream,
+            pose_stream, ground_obstacles_stream,
+            ground_speed_limit_signs_stream, ground_stop_signs_stream)
         if FLAGS.planning_type == 'waypoint':
             logger.debug('Adding obstacle location finder...')
             # Adds an operator that finds the world locations of the obstacles.

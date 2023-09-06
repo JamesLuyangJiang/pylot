@@ -7,6 +7,22 @@ from pylot.perception.messages import ObstaclesMessage
 from pylot.simulation.utils import get_detected_speed_limits, \
     get_detected_traffic_stops
 
+import json
+import os
+from pylot.perception.detection.utils import BoundingBox2D
+
+class CustomEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, BoundingBox2D):
+            bbox = {
+                'xmin': "{}".format(obj.x_min),
+                'xmax': "{}".format(obj.x_max),
+                'ymin': "{}".format(obj.y_min),
+                'ymax': "{}".format(obj.y_max)
+            }
+            return bbox
+            
+        return obj.__dict__
 
 class PerfectDetectorOperator(erdos.Operator):
     """Uses info from the simulator to perfectly detect obstacles, stop and
@@ -147,8 +163,36 @@ class PerfectDetectorOperator(erdos.Operator):
             speed_limit_signs_msg.speed_signs, depth_msg.frame,
             segmented_msg.frame)
 
+        # Log speed limits
+        # Extract only necessary fields
+        json_speed_limit = []
+        for speed_sign in det_speed_limits:
+            json_speed_limit.append(
+                {'id': speed_sign.id,
+                 'limit': speed_sign.speed_limit,
+                 'bbox': speed_sign.bounding_box_2D,
+                }
+            )
+
+        # Prepare the complete json object
+        ground_obstacle_json = json.dumps([obj for obj in json_speed_limit], cls=CustomEncoder)
+        ground_obstacle_json = ground_obstacle_json.replace("\"", "")
+        ground_obstacle = {
+            "timestamp": "{}".format(timestamp),
+            "g_obstacles": ground_obstacle_json
+        }
+
+        # Append the json object to the json file
+        filename = "{}/ground_obstacles.json".format(self._flags.data_path)
+        with open(filename, "a") as file:
+            json.dump(ground_obstacle, file)
+            file.write(os.linesep)
+            file.close()
+
         det_stop_signs = get_detected_traffic_stops(stop_signs_msg.stop_signs,
                                                     depth_msg.frame)
+
+        # print(stop_signs_msg.stop_signs)
 
         det_obstacles = det_obstacles + det_speed_limits + det_stop_signs
 
