@@ -261,7 +261,7 @@ def main(args):
     
     current_time = datetime.datetime.now()
     time_string = current_time.strftime("%Y-%m-%d_%H:%M:%S")
-    os.makedirs("data/{}".format(time_string), exist_ok=True)
+    os.makedirs("{}{}".format(FLAGS.data_path, time_string), exist_ok=True)
     FLAGS.data_path = os.path.join(FLAGS.data_path, time_string)
 
     try:
